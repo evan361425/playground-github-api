@@ -2,8 +2,6 @@
 
 把 GitHub API 包裝一下，並提供一些有用的功能。
 
-- [需要準備的東西](#需要準備的東西)
-
 ## 需要準備的東西
 
 ![GitHub 權限](https://user-images.githubusercontent.com/14554683/118752573-eb2a7c00-b895-11eb-9277-3fb23a90b340.png)
@@ -23,6 +21,8 @@
 
 ```shell
 $ npx ts-node src/search.ts -h
+$ npx ts-node src/search-repos.ts -h
+$ npx ts-node src/diff-branch.ts -h
 ```
 
 ### 好用腳本
