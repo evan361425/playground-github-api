@@ -1,0 +1,85 @@
+{
+  "name": "github-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "搜尋 104corp 內所有檔名含有 travis 且為 YAML 檔的 repo 並存進 SQLite 中",
+  "keywords": [
+    "GitHub API",
+    "search API",
+    "Node.js",
+    "TypeScript"
+  ],
+  "homepage": "https://github.com/104corp/github-api#readme",
+  "bugs": {
+    "url": "https://github.com/104corp/github-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/104corp/github-api.git"
+  },
+  "license": "SEE LICENSE IN LICENSE file",
+  "author": "Shueh Chou Lu <evan.lu@104.com.tw>",
+  "main": "index.js",
+  "scripts": {
+    "precompile": "rimraf src/**/*.js test/**/*.js",
+    "compile": "tsc --project tsconfig.production.json",
+    "get-file": "ts-node src/get-file.ts",
+    "get-branches": "ts-node src/get-branches.ts",
+    "get-command": "ts-node src/travis/get-command.ts",
+    "yaml-to-json": "ts-node src/yaml-to-json.ts",
+    "yaml-to-sqlite": "ts-node src/yaml-to-sqlite.ts",
+    "makefile-to-sqlite": "ts-node src/makefile-to-sqlite.ts",
+    "build": "npm run get-file && npm run get-branches && npm run yaml-to-json && npm run yaml-to-sqlite",
+    "test": "mocha",
+    "pretest-coverage": "rimraf src/**/*.js test/**/*.js",
+    "test-coverage": "nyc mocha",
+    "lint": "eslint 'src/**/*.ts' 'test/**/*.ts' && npx sort-package-json package.json && npmPkgJsonLint -q ."
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "include": [
+      "src/**"
+    ],
+    "reporter": [
+      "html",
+      "text"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "axios": "^0.26.1",
+    "js-yaml": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.10",
+    "@types/chai": "^4.2.15",
+    "@types/got": "9.6.12",
+    "@types/js-yaml": "^4.0.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^5",
+    "@typescript-eslint/parser": "^5",
+    "chai": "^4.3.0",
+    "eslint": "^8",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-mocha": "^10.0.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7",
+    "mocha": "^9.2.2",
+    "npm-package-json-lint": "^6.3.0",
+    "npm-package-json-lint-config-default": "^5.0.0",
+    "nyc": "^15.1.0",
+    "sort-package-json": "^1",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
