@@ -1,18 +1,13 @@
 import { ArgumentParser } from 'argparse';
 import { createWriteStream, WriteStream } from 'fs';
-import { checkSetting, hideString } from './helpers';
-import { GitHubApi } from './helpers/github-api';
+import { checkSetting, GitHubApi, hideString, parseToken } from './helpers';
 import { branchInfo, repoInfo } from './types';
 
 function parseArgs() {
   const parser = new ArgumentParser({
-    description: 'Get all protected branches in repositories',
+    description: 'Get all repo in user or organization',
   });
-
-  parser.add_argument('-t', '--token', {
-    help: 'GitHub token',
-    required: true,
-  });
+  parseToken(parser);
 
   parser.add_argument('--user', {
     help: 'List user repositories, if not set `org`, it will be true by default',
@@ -33,6 +28,10 @@ function parseArgs() {
     help: 'Output folder for data. Use env {OUTPUT} as default else `data/result.jsonl`',
     default: process.env.OUTPUT ?? 'data/result.jsonl',
   });
+  parser.add_argument('--protected', {
+    help: 'Get protected branches',
+    action: 'store_true',
+  });
   parser.add_argument('--one', {
     help: 'Run one result only',
     action: 'store_true',
@@ -50,9 +49,11 @@ class Args {
 
   readonly org?: string;
 
+  readonly page: number;
+
   readonly one: boolean;
 
-  readonly page: number;
+  readonly protected: boolean;
 
   private outputStream!: WriteStream;
 
@@ -60,14 +61,16 @@ class Args {
     token: string;
     output: string;
     org?: string;
-    one: boolean;
     page: number;
+    protected: boolean;
+    one: boolean;
     [key: string]: unknown;
   }) {
     this.token = values.token;
     this.output = values.output.replace(/(\/|\\)*$/g, '');
     this.org = values.org;
     this.one = values.one;
+    this.protected = values.protected;
     this.page = values.page;
   }
 
@@ -106,25 +109,42 @@ class Executor {
   }
 
   async go(): Promise<void> {
-    for await (const repo of this.searchRepos()) {
-      const branches = await this.searchProtectedBranches(repo.name);
-      const hasBranch = (b: string) =>
-        branches.some((branch) => branch.includes(b));
+    await this.args.preflight();
 
-      const data = {
-        name: repo.name,
-        full_name: repo.full_name,
-        branches,
-        hasProduction: hasBranch('production'),
-        hasStaging: hasBranch('staging'),
-        hasMaster: hasBranch('master'),
-        hasRelease: hasBranch('release'),
-      };
-      this.args.write(data);
+    for await (const repo of this.searchRepos()) {
+      if (this.args.protected) {
+        repo.protected_branches = await this.getProtectedBranches(repo);
+      }
+
+      delete repo.owner;
+      delete repo.organization;
+      Object.entries(repo).forEach((e) => {
+        if (e[0].endsWith('_url')) {
+          delete repo[e[0]];
+        }
+      });
+
+      this.args.write(repo);
     }
   }
 
-  async *searchRepos(): AsyncGenerator<repoInfo> {
+  private async getProtectedBranches(repo: repoInfo) {
+    const branches = await this.searchProtectedBranches(repo.name);
+    const hasBranch = (b: string) =>
+      branches.some((branch) => branch.includes(b));
+
+    return {
+      name: repo.name,
+      full_name: repo.full_name,
+      branches,
+      hasProduction: hasBranch('production'),
+      hasStaging: hasBranch('staging'),
+      hasMaster: hasBranch('master'),
+      hasRelease: hasBranch('release'),
+    };
+  }
+
+  private async *searchRepos(): AsyncGenerator<repoInfo> {
     let counter = 1;
     do {
       const repos = await this.fetcher.getWithNext<repoInfo[]>(
@@ -139,12 +159,12 @@ class Executor {
       for (const repo of repos) {
         yield repo;
 
-        console.log(`(${counter++}/${repo.total_count}) ${repo.full_name}`);
+        console.log(`(${counter++}) ${repo.full_name}`);
       }
     } while (this.fetcher.hasNext());
   }
 
-  async searchProtectedBranches(repo: string): Promise<string[]> {
+  private async searchProtectedBranches(repo: string): Promise<string[]> {
     const branches = await this.fetcher.get<branchInfo[]>(
       `repos/${repo}/branches`,
     );

@@ -1,5 +1,3 @@
-
-
 import { CodeBuildConfigPhases } from './types/config-phase';
 
 export async function parseCodeBuild(

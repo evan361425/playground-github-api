@@ -2,20 +2,20 @@
   "name": "github-api",
   "version": "1.0.0",
   "private": true,
-  "description": "搜尋 104corp 內所有檔名含有 travis 且為 YAML 檔的 repo 並存進 SQLite 中",
+  "description": "把 GitHub API 包裝一下，並提供一些有用的功能",
   "keywords": [
     "GitHub API",
     "search API",
     "Node.js",
     "TypeScript"
   ],
-  "homepage": "https://github.com/104corp/github-api#readme",
+  "homepage": "https://github.com/evan361425/playground-github-api#readme",
   "bugs": {
-    "url": "https://github.com/104corp/github-api/issues"
+    "url": "https://github.com/evan361425/playground-github-api/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/104corp/github-api.git"
+    "url": "git+https://github.com/evan361425/playground-github-api.git"
   },
   "license": "SEE LICENSE IN LICENSE file",
   "author": "Shueh Chou Lu <evan.lu@104.com.tw>",

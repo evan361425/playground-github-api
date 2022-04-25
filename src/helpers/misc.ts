@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readdirSync, stat } from 'fs';
+import { ArgumentParser } from 'argparse';
+import { existsSync, mkdirSync, readFileSync, stat } from 'fs';
 import { load as yamlLoad } from 'js-yaml';
 import { createInterface } from 'readline';
 
@@ -20,16 +21,6 @@ export function createFolders(folder: string): void {
     mkdirSync(folder, { recursive: true });
   }
 }
-export function listDirectories(source: string): string[] {
-  return readdirSync(source, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name);
-}
-export function listFiles(source: string): string[] {
-  return readdirSync(source, { withFileTypes: true })
-    .filter((dirent) => !dirent.isDirectory())
-    .map((dirent) => dirent.name);
-}
 
 export function yaml2json<T>(data: Buffer | string): T | undefined {
   try {
@@ -37,6 +28,18 @@ export function yaml2json<T>(data: Buffer | string): T | undefined {
   } catch (error) {
     return undefined;
   }
+}
+
+export function parseToken(parser: ArgumentParser): void {
+  const token =
+    process.env.GH_PAT ??
+    (existsSync('token.txt')
+      ? readFileSync('token.txt').toString().trim()
+      : '');
+  parser.add_argument('-t', '--token', {
+    help: 'GitHub token',
+    default: token,
+  });
 }
 
 export function hideString(value: string) {

@@ -1,3 +1,3 @@
+export * from './github-api';
+export * from './github-search-args';
 export * from './misc';
-export * from './language-helper';
-export * from './sqlite-helper';

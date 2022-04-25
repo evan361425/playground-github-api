@@ -11,11 +11,12 @@ import {
   checkSetting,
   createFolders,
   fileIsNotEmpty,
+  GitHubApi,
+  GitHubSearchArgs,
   hideString,
   METADATA_EXT,
+  parseToken,
 } from './helpers';
-import { GitHubApi } from './helpers/github-api';
-import { GitHubSearchArgs } from './helpers/github-search-args';
 import {
   contentInfo,
   itemInfo,
@@ -29,11 +30,7 @@ function parseArgs() {
   const parser = new ArgumentParser({
     description: 'Get file for specific pattern by GitHub API',
   });
-
-  parser.add_argument('-t', '--token', {
-    help: 'GitHub token',
-    required: true,
-  });
+  parseToken(parser);
 
   parser.add_argument('-q', '--query', {
     help:
@@ -41,7 +38,7 @@ function parseArgs() {
       'see https://docs.github.com/en/search-github/searching-on-github/searching-code',
   });
   parser.add_argument('-c', '--code', {
-    help: 'Query values in code',
+    help: 'Query specific value in code',
   });
   parser.add_argument('-f', '--filename', {
     help: 'Query filename',
@@ -50,12 +47,12 @@ function parseArgs() {
     help: 'Query code language',
   });
   parser.add_argument('-i', '--ignore', {
-    help: 'Query ignore path, no need root path',
+    help: 'Ignored path to search, should starts without /',
     action: 'extend',
     default: [],
   });
   parser.add_argument('--org', {
-    help: 'Query organization',
+    help: 'Specific organization name',
     default: '104corp',
   });
   parser.add_argument('-p', '--page', {
@@ -71,17 +68,21 @@ function parseArgs() {
   parser.add_argument('--action', {
     help:
       'What action you want to take (file/metadata). ' +
-      'file: Write down the found file by query, need send request again; ' +
-      'metadata: Write down the metadata of found file',
+      'file: Write down the found file by metadata; ' +
+      'metadata: Only write down the metadata of found file',
     option_strings: ['file', 'metadata'],
     default: 'metadata',
   });
   parser.add_argument('-o', '--output', {
-    help: 'Output file location. file: folder; metadata: file. Use env {OUTPUT} as default else data/result.jsonl',
+    help:
+      'Output file location. ' +
+      'file `action` will need folder; ' +
+      'metadata `action` will need file. ' +
+      'Use env {OUTPUT} as default else data/result.jsonl',
     default: process.env.OUTPUT ?? 'data/result.jsonl',
   });
   parser.add_argument('--metadata', {
-    help: 'Use metadata result to get file, this will force action to file',
+    help: 'Used metadata result to get file, this will force `action` to file',
   });
   parser.add_argument('--one', {
     help: 'Run one result only',

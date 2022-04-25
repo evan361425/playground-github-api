@@ -1,5 +1,3 @@
-
-
 import { CodeDeployConfig } from './types/config';
 
 export async function parseCodeDeploy(

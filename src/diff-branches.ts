@@ -2,19 +2,20 @@ import { ArgumentParser } from 'argparse';
 import { createHash } from 'crypto';
 import { createReadStream, readFileSync, ReadStream, writeFileSync } from 'fs';
 import { createInterface } from 'readline';
-import { checkSetting, fileIsNotEmpty, hideString } from './helpers';
-import { GitHubApi } from './helpers/github-api';
+import {
+  checkSetting,
+  fileIsNotEmpty,
+  GitHubApi,
+  hideString,
+  parseToken,
+} from './helpers';
 import { branchInfo, contentInfo, itemInfo } from './types';
 
 function parseArgs() {
   const parser = new ArgumentParser({
     description: 'Get same file on different branches',
   });
-
-  parser.add_argument('-t', '--token', {
-    help: 'GitHub token',
-    required: true,
-  });
+  parseToken(parser);
 
   parser.add_argument('-i', '--ignored', {
     help: 'Ignored prefix of branch name',
@@ -112,6 +113,8 @@ class Executor {
   }
 
   async go(): Promise<void> {
+    await this.args.preflight();
+
     for await (const item of this.loadInput()) {
       const branches = await this.fetchBranches(item);
       const baseName = this.args.output.concat(item.file_name);
