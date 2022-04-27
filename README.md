@@ -27,6 +27,6 @@ $ npx ts-node src/diff-branch.ts -h
 
 ### 好用腳本
 
+- `checked-missed.sh` 透過 search-repo 和 search 之間的結果交叉比對，找到 search 還遺漏了哪些 repo
 - `scripts/merge-repos.sh` 整合多個 repo 進單一資料
-- `find-package.sh` 在各個檔案中篩選特定 pattern
 - `compact-keys.sh` 本多個檔案的資料整合進單一資料中，例如 composer.json 的 require
