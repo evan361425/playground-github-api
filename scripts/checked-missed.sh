@@ -1,21 +1,23 @@
 #!/bin/bash
 
-if [[ -n $2 ]]; then
-  select="select($2) | "
-fi
-
 test -d temp/ || mkdir temp
+test -f "data/$1.jsonl" || touch "data/$1.jsonl"
 
 pkg_mgr=$1
-file=appspec.yml
+file=$1
 f1=temp/language.txt
 f2=temp/package.txt
 f3=temp/diff.txt
 f4=temp/missed.txt
 f5=temp/missed.jsonl
-base=data/repos2.jsonl
+base=$2
 
-jq -r "${select}select(.archived == false) | select(.fork == false) | [.name, .id] | @tsv" $base | sort | uniq | sort > $f1
+test -n "$base" || base=data/repos.jsonl
+
+echo "$base"
+exit 0
+
+jq -r "select(.archived == false) | select(.fork == false) | [.name, .id] | @tsv" $base | sort | uniq | sort > $f1
 jq -r '[.repository.name, .repository.id] | @tsv' "data/$pkg_mgr.jsonl" | sort | uniq | sort > $f2
 
 diff $f1 $f2 | grep '^< ' | cut -c 3- > $f3
