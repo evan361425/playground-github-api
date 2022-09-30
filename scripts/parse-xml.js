@@ -20,11 +20,18 @@ function parseFolder(f) {
   return f.substring(index2 === -1 ? 0 : index2 + 1);
 }
 
-function parseDep(obj) {
+function parseDep(obj, versions) {
+  if (typeof obj.version === 'string' && obj.version.startsWith('$')) {
+    obj.version =
+      versions[obj.version.substring(2, obj.version.length - 1)] ?? obj.version;
+  }
+  if (!obj.groupId) {
+    obj.groupId = 'root';
+  }
   return [obj.groupId, obj.artifactId, obj.version].join(' ');
 }
 
-function* loopDep(data, path) {
+function* loopDep(data, path, versions = {}) {
   let child = data;
   try {
     path.split('.').forEach((e) => (child = child[e]));
@@ -32,10 +39,12 @@ function* loopDep(data, path) {
     return;
   }
 
-  if (!Array.isArray(child)) return;
-
-  for (const e of child) {
-    yield parseDep(e);
+  if (!Array.isArray(child)) {
+    yield parseDep(child, versions);
+  } else {
+    for (const e of child) {
+      yield parseDep(e, versions);
+    }
   }
 }
 
@@ -50,11 +59,13 @@ async function main() {
     const filters = {
       'dependencies.dependency': 'dep',
       'dependencyManagement.dependencies.dependency': 'dep',
+      'build.pluginManagement.plugins.plugin': 'plugin',
+      'build.plugins.plugin': 'plugin',
     };
 
     let counter = 0;
     Object.entries(filters).forEach((entry) => {
-      for (const dep of loopDep(data, entry[0])) {
+      for (const dep of loopDep(data, entry[0], data.properties)) {
         counter++;
         console.log(folder + ' ' + entry[1] + ' ' + dep);
       }

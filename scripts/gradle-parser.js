@@ -171,6 +171,10 @@ function deepParse(chunk, state, keepFunctionCalls, skipEmptyValues) {
     if (character === CHAR_BLOCK_START) {
       // We need to skip the current (=start) character so that we literally "step into" the next closure/block
       state.index++;
+      if (currentKey === '') {
+        currentKey = tempString;
+        tempString = '';
+      }
 
       if (SPECIAL_KEYS.hasOwnProperty(currentKey)) {
         out[currentKey] = SPECIAL_KEYS[currentKey](chunk, state);

@@ -11,6 +11,20 @@ parser.add_argument('files', {
 const args = parser.parse_args();
 
 const numberChecker = RegExp('\\d');
+const versionStart = [
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '[',
+  '(',
+];
 
 function parseFolder(f) {
   const index = f.lastIndexOf('/');
@@ -42,9 +56,9 @@ function sanitizeStr(str) {
   return str;
 }
 
-function loopValues(data, log, prefix = '') {
+function loopValues(data, vars, log, prefix = '') {
   if (Array.isArray(data)) {
-    data.forEach((e) => loopValues(e, log, prefix));
+    data.forEach((e) => loopValues(e, vars, log, prefix));
   } else if (typeof data === 'object') {
     Object.entries(data).forEach((entry) => {
       if (entry[0] === 'dependencies') {
@@ -54,17 +68,34 @@ function loopValues(data, log, prefix = '') {
               return;
             }
           }
-          log(
-            prefix.concat(
-              ['dependency', dep.group, dep.name, dep.version].join(' '),
-            ),
-          );
+          if (
+            dep.group &&
+            dep.name &&
+            dep.version &&
+            dep.group.indexOf(' ') === -1 &&
+            dep.name.indexOf(' ') === -1
+          ) {
+            if (
+              !versionStart.some((e) => dep.version.startsWith(e)) &&
+              vars &&
+              vars[dep.version]
+            ) {
+              dep.version = vars[dep.version];
+            }
+            log(
+              prefix.concat(
+                ['dependency', dep.group, dep.name, dep.version].join(' '),
+              ),
+            );
+          }
         });
         return;
       }
 
       if (Array.isArray(entry[1])) {
-        entry[1].forEach((e) => loopValues(e, log, prefix + entry[0] + '-'));
+        entry[1].forEach((e) =>
+          loopValues(e, vars, log, prefix + entry[0] + '-'),
+        );
       } else if (typeof entry[1] === 'number') {
         log('object ' + prefix + e2s(entry));
       } else if (typeof entry[1] === 'string') {
@@ -74,7 +105,7 @@ function loopValues(data, log, prefix = '') {
           log('object ' + prefix + e2s([entry[0], v]));
         }
       } else {
-        loopValues(entry[1], log, prefix + entry[0] + '-');
+        loopValues(entry[1], vars, log, prefix + entry[0] + '-');
       }
     });
   }
@@ -84,7 +115,7 @@ async function main(params) {
   for (const file of args.files) {
     const folder = parseFolder(file);
     const parsed = await g2js.parseFile(file);
-    loopValues(parsed, (v) => console.log(folder + ' ' + v));
+    loopValues(parsed, parsed.ext, (v) => console.log(folder + ' ' + v));
   }
 }
 
